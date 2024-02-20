@@ -1,0 +1,15 @@
+{
+  "name": "i-html-element",
+  "version": "0.1.1",
+  "description": "A drop-in tag that allows for dynamically importing html, inline. It's a bit like an <iframe>, except the html gets adopted into the page.",
+  "main": "i-html.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepack": "npx esbuild --target=es2020 --minify --bundle i-html.js > i-html.min.js"
+  },
+  "files": [
+    "*.js"
+  ],
+  "author": "Keith Cirkel <https://keithcirkel.co.uk>",
+  "license": "MIT"
+}

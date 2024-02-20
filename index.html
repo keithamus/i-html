@@ -1,0 +1,581 @@
+<!doctype html>
+<html>
+  <head>
+    <title>i-html, an inline-html import element</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <script type="module" src="./i-html.js"></script>
+  </head>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica,
+        Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+    p {
+      max-width: 80ch;
+      margin: 0.5rem 0;
+    }
+    h1,
+    h2,
+    h3,
+    h4 {
+      margin: 2rem 0 0 0;
+    }
+    h1:first-child {
+      margin-top: 1rem;
+    }
+    .demo {
+      border: 1px solid black;
+      border-radius: 8px;
+      width: fit-content;
+      min-height: 1ch;
+      padding: 1rem;
+    }
+  </style>
+  <body>
+    <main>
+      <h1>i-html</h1>
+      <p>
+        <a href="https://github.com/keithamus/i-html">i-html</a> is a drop in
+        tag that allows for dynamically <em>importing</em> html,
+        <em>inline</em>. It's a bit like an <code>&lt;iframe></code>, except the
+        html gets adopted into the page.
+      </p>
+      <p>
+        You might have used something similar before, it might seem familiar to
+        other techniques such as
+        <a href="https://turbo.hotwired.dev/">hotwired turbo</a> or similar. You
+        might have even used an element very close to this one, for example the
+        popular
+        <a href="https://github.com/github/include-fragment-element"
+          >include-fragment-element</a
+        >
+        by GitHub. This element is a spiritual successor to that one (more on
+        that below). But this one is <code>&lt;i-html></code>. Let's talk about
+        it.
+      </p>
+      <p>
+        Inside the box below is a demonstration of the element. The box is there
+        to help you see it, but the element is inside. If JavaScript is enabled
+        the contents of the box should read "Hello world!". The source page is
+        just an HTML page. There's nothing special about it. Look, go see for
+        yourself: <a href="example-responses/hello.html">hello.html</a>.
+      </p>
+
+      <div class="demo">
+        <i-html src="example-responses/hello.html">Loading...</i-html>
+      </div>
+
+      <p>
+        The <code>&lt;i-html></code> tag can be placed on a page, as an empty
+        container. It is completely unstyled (well almost, it has
+        <code>display:contents</code>). Whenever the <code>src=</code> attribute
+        changes, it will fetch the requested resource as
+        <code>text/html</code> and replace its inner contents with the parsed
+        contents of the response. That's essentially all it does. Kind of.
+      </p>
+
+      <p>
+        Setting <code>src=</code> and leaving it alone does not really
+        demonstrate the full utility, however, because it is far more capable of
+        interesting things when utilised correctly. People do lots of novel
+        things with <code>&lt;img></code> tags, and <code>&lt;i-html></code>
+        should be no different.
+      </p>
+
+      <h2 id="features">Features</h2>
+
+      <h3 id="link-target">Targeting with link</h3>
+
+      <p>
+        Like an iframe, <code>&lt;i-html></code> respects the
+        <code>target=</code> attribute on links. If an
+        <code>&lt;a target=></code> points to the <code>&lt;i-html></code>, then
+        the <code>src=</code> is switched with that of the link. A
+        demonstration:
+      </p>
+
+      <div class="demo">
+        <a href="example-responses/hello.html" target="link-target-example"
+          >Load hello.html</a
+        >
+        <a
+          href="example-responses/how-are-you.html"
+          target="link-target-example"
+          >Load how-are-you.html</a
+        >
+        <br />
+        <i-html id="link-target-example"></i-html>
+      </div>
+
+      <p>
+        Also like an iframe, <code>target=</code> on links is also respected.
+        This means forms can submit to an <code>&lt;i-html></code> element which
+        will then load in new content. Here's a dummy form, for example:
+      </p>
+
+      <div class="demo">
+        <form
+          action="example-responses/form-save.html"
+          method="get"
+          target="form-target-example"
+        >
+          <label
+            >A form label:
+            <input type="search" />
+          </label>
+          <button type="submit">Submit</button>
+        </form>
+
+        <p>Submitting the form will change the content below:</p>
+
+        <i-html id="form-target-example">Nothing yet</i-html>
+      </div>
+
+      <p>
+        Wrap a <code>&lt;form></code> tag in an <code>&lt;i-html></code> element
+        and you'll have a form that replaces itself. Serve the same form back
+        and you have an "AJAX style" form with no effort.
+      </p>
+
+      <div class="demo">
+        <i-html id="ajax-form-target-example">
+          <form
+            action="example-responses/ajax-form.html"
+            method="get"
+            target="ajax-form-target-example"
+          >
+            <label>
+              A form label:
+              <input type="search" />
+            </label>
+            <button type="submit">Submit</button>
+          </form>
+
+          <p>Submitting the form will change the whole form</p>
+        </i-html>
+      </div>
+
+      <p>
+        Of course because <code>&lt;forms></code> work, so does
+        <code>&lt;button formaction=</code>. Example:
+      </p>
+
+      <div class="demo">
+        <form method="get" target="formaction-example">
+          <button formaction="example-responses/form-delete.html" type="submit">
+            Delete
+          </button>
+          <button formaction="example-responses/form-save.html" type="submit">
+            Save
+          </button>
+        </form>
+
+        <p>Submitting the form will change the content below:</p>
+
+        <i-html id="formaction-example">Nothing yet</i-html>
+      </div>
+
+      <h3 id="targeting-response">Targeting the response</h3>
+
+      <p>
+        By default <code>&lt;i-html></code> will parse the response as HTML,
+        query for an element inside the response HTML, and insert the contents
+        of that element into the page. The query it uses is determined by the
+        <code>target=</code> attribute, which defaults to <code>'body'</code>.
+        If you find you want to take a different element from the response body
+        you can set <code>target=</code> to any valid <code>querySelecor</code>.
+        If <code>target=</code> is an invalid <code>querySelector</code> it'll
+        revert to <code>'body'</code>. You can check if a
+        <code>target=</code> select is valid by using JavaScript to set
+        <code>.target</code> and then read the value back out, for example:
+      </p>
+
+      <pre>
+        <code>
+myEl.target = '/not a valid selector/' // this won't set:
+console.assert(myEl.accept === 'body')
+
+myEl.accept = '.this[is]:valid' // this will set:
+console.assert(myEl.accept === '.this[is]:valid')
+        </code>
+      </pre>
+
+      <p>
+        In the below example, these two links fetch the same HTML, which has two
+        paragraphs. However the two links target two different
+        <code>&lt;i-html></code> elements, the first one with a
+        <code>target="p:first-child"</code>, the second with a
+        <code>target="p:last-child"</code>.
+      </p>
+
+      <div class="demo">
+        <a
+          href="example-responses/two-paragraphs.html"
+          target="two-paragraphs-a"
+          >Load two-paragraphs.html into first target</a
+        >
+        <a
+          href="example-responses/two-paragraphs.html"
+          target="two-paragraphs-b"
+          >Load two-paragraphs.html into first target</a
+        >
+
+        <p><i-html id="two-paragraphs-a" target="p:first-child"></i-html></p>
+        <p><i-html id="two-paragraphs-b" target="p:last-child"></i-html></p>
+      </div>
+
+      <h3 id="content-negotiation">Content negotiation</h3>
+
+      <p>
+        By default <code>&lt;i-html></code> will make a request using the header
+        <code>Accept: text/html</code>. You can customise this by setting the
+        <code>accept=</code> attribute, but it is limited to certain values. It
+        only allows mimes of the type <code>text/html</code>,
+        <code>image/svg+xml</code>, <code>application/xml</code> or
+        <code>text/event-stream</code>. You can slightly customise these types
+        by setting the "subtype combination" or "parameter values", and it'll be
+        smart and make the request with those extras. This means
+        <code>application/xhtml+xml</code> will work, and the expected return
+        content-type must be <code>application/xml</code> or
+        <code>application/xhtml+xml</code> (but something like
+        <code>application/atom+xml</code> will fail). Also more complex mime
+        types like <code>text/fragment+html; charset=utf-8</code> will work, and
+        the server can respond with <code>text/html</code> or
+        <code>text/fragment+html</code>. However, a mime such as
+        <code>application/json</code> is an invalid type, and trying to set such
+        an invalid type will revert to <code>text/html</code>. You can check if
+        a type works by using JavaScript to set <code>.accept</code> and then
+        read the value back out, for example:
+      </p>
+
+      <pre>
+        <code>
+myEl.accept = 'application/json' // this won't set:
+console.assert(myEl.accept === 'text/html')
+
+myEl.accept = 'text/fragment+html; charset=utf-8' // this will set:
+console.assert(myEl.accept === 'text/fragment+html; charset=utf-8')
+        </code>
+      </pre>
+
+      <p>
+        The mime types <code>text/html</code>, <code>image/svg+xml</code>, and
+        <code>application/xml</code> will all use <code>DOMParser</code> to
+        parse the full response body. <code>text/event-stream</code> uses a
+        different streaming mode...
+      </p>
+
+      <h3 id="streaming-mode">Streaming Mode</h3>
+
+      <p>
+        With the <code>accept=</code> attribute set to
+        <code>text/event-stream</code>, it will use an
+        <code>EventSource</code> to listen for
+        <a
+          href="https://developer.mozilla.org/en-US/docs/Web/API/Server-sent_events/Using_server-sent_events"
+          >Server-Side Events</a
+        >. A connection will be open and for each event fired, the response will
+        be converted using <code>DOMParser</code> and replaced. This allows for
+        many replacements with one request (this could be useful, for example,
+        to show a notification count for a user). The connection will be kept
+        open and replacing contents until either the server drops out, the
+        browser closes the <code>EventSource</code>, the element is removed from
+        the DOM, or the <code>src=</code> or <code>accept=</code> attributes
+        change value.
+      </p>
+
+      <h3 id="insertion-mode">Insertion Mode</h3>
+
+      <p>
+        Whether in streaming mode or one-shot mode, the default operation is to
+        replace the contents of the element with the newly downloaded contents.
+        While this is useful <em>most of the time</em>, some of the time it can
+        be even more useful to switch to an append mode. Changing to
+        <code>insert=append</code> will cause new content to be added after all
+        the current children, and using <code>insert=prepend</code> will cause
+        new content to be added before the current children:
+      </p>
+
+      <div class="demo">
+        <a href="example-responses/prepend-list.html" target="prepend-example">
+          Prepend to this list:
+        </a>
+        <ul>
+          <i-html id="prepend-example" target="ul" insert="prepend">
+            <li>Milk</li>
+            <li>Eggs</li>
+          </i-html>
+        </ul>
+      </div>
+
+      <h3 id="deferring-loading">Deferring Loading</h3>
+
+      <p>
+        Just like <code>&lt;img></code> and <code>&lt;iframe></code> tags,
+        <code>&lt;i-html></code> tags have a <code>loading=</code> attribute. By
+        default they are <code>loading=eager</code>, but changing it to
+        <code>loading=lazy</code> means it will wait until it's visible in the
+        viewport until it makes the request. This also respects CSS styles, so
+        if it's inside an element with <code>display:none</code> then
+        <code>loading=lazy</code> can prevent it from loading until its
+        container is <code>display:block</code>. This is really handy for
+        components like <code>&lt;dialog></code>s.
+      </p>
+
+      <p>
+        Changing to <code>loading=none</code> means it will <em>never load</em>,
+        unless the <code>loading=</code> attribute is changed back to either
+        <code>loading=eager</code> or <code>loading=lazy</code>. This gives you
+        an opportunity to use JavaScript to determine when the loading should
+        occur, for example on click.
+      </p>
+
+      <h3 id="styling">Styling</h3>
+
+      <p>
+        By default this element is <code>display: contents</code> so it won't
+        effect layout, and it has <code>role=presentation</code> so the
+        container itself has no impact on the accessibility tree. All of the
+        content loaded in, however, will effect layout and the accessibility
+        tree. There are 4 pseudo classes you can use to style it during various
+        stages of its lifecycle, it will always be in one of these states, and
+        never more than one. The states are <code>loading</code>,
+        <code>loaded</code>, <code>errored</code>, and <code>waiting</code>.
+        They can be styled like so:
+      </p>
+
+      <pre>
+        <code>
+          <style style="display:block">
+.foo:state(waiting) { background: grey; }
+.foo:state(loading) { background: yellow; }
+.foo:state(loaded) { background: green; }
+.foo:state(error) { background: red; }
+          </style>
+        </code>
+      </pre>
+
+      <aside>
+        For older browsers that don't support
+        <a
+          href="https://developer.mozilla.org/en-US/docs/Web/API/CustomStateSet"
+          >CSS CustomStateSet</a
+        >
+        the element will fall back to using attributes like
+        <code>[state-waiting]</code>. Chrome version 90-124 used a different
+        syntax for <code>:state()</code>: like <code>:--waiting</code>. To
+        support all of these you'll need something more like:
+
+        <pre>
+          <code>
+            <style style="display:block">
+.foo:where(:state(waiting), :--waiting, [state-waiting]) { background: grey; }
+.foo:where(:state(loading), :--loading, [state-loading]) { background: yellow; }
+.foo:where(:state(loaded), :--loaded, [state-loaded]) { background: green; }
+.foo:where(:state(error), :--error, [state-error]) { background: red; }
+            </style>
+          </code>
+        </pre>
+      </aside>
+
+      <ul>
+        <li>
+          <p>
+            <code>waiting</code> is the state used when the element is in the
+            DOM, but either does not have a <code>src=</code> or has
+            <code>loading=lazy</code> or <code>loading=none</code> and hasn't
+            yet begun to load. Once an element has left the <code>waiting</code>
+            state it'll never go back to it.
+          </p>
+        </li>
+        <li>
+          <p>
+            <code>loading</code> is the state used when the element is in making
+            a request, but the request hasn't yet completed. An individual
+            element can enter and exit this state multiple times per session.
+          </p>
+        </li>
+        <li>
+          <p>
+            <code>streaming</code> is the state used when the request was an
+            <code>text/event-stream</code> type, and the connection has been
+            opened. In this state events can stream in, and the
+            <code>loaded</code> state is removed. When the connection closes it
+            will transition to a <code>loaded</code> or <code>error</code>
+            state.
+          </p>
+        </li>
+        <li>
+          <p>
+            <code>loaded</code> is the state used when the element has
+            successfully completed and closed the request and has inserted the
+            content into the page, and has no more work to do for now. If the
+            <code>src=</code> changes, it might move back to the
+            <code>loading</code> state.
+          </p>
+        </li>
+        <li>
+          <p>
+            <code>error</code> is the state used when the element has completed
+            a request, but the request failed somehow. Unless in streaming mode,
+            the element won't have inserted any content into the page. If the
+            <code>src=</code> or <code>accept=</code> attributes change, it
+            might move back to the <code>loading</code> state.
+          </p>
+        </li>
+      </ul>
+
+      <h3 id="events">Events</h3>
+
+      <p>
+        There are a wealth of events that are fired for each stage of the
+        elements lifecycle. Just like <code>&lt;img></code> and
+        <code>&lt;iframe></code> elements, <code>&lt;i-html></code> elements
+        dispatch <code>loadstart</code>, <code>load</code>,
+        <code>loadend</code>, and <code>error</code> events to announce which
+        stage of the loading process they're in. They also dispatch
+        <code>beforeinsert</code>, and <code>inserted</code> events.
+      </p>
+
+      <ul>
+        <li>
+          <p>
+            <code>loadstart</code> is dispatched right before a request is
+            started. This event also has a <code>.request</code> property that
+            is the <code>Request</code> object that will be given to
+            <code>fetch()</code>. You can re-assign <code>.request</code> or
+            mutate some of its properties, and whatever changes you make to it
+            will propagate to the <code>fetch()</code> call, so the
+            <code>loadstart</code> event is really useful if you want to
+            customise requests beyond the default capabilities, for example
+            adding new headers. You can call <code>.preventDefault()</code> on
+            this event to stop loading happening altogether, and no subsequent
+            events will fire unless the request lifecycle is restarted (for
+            example by changing <code>src=</code>).
+          </p>
+        </li>
+        <li>
+          <p>
+            <code>load</code> is dispatched as soon as the request has completed
+            successfully. When streaming, this will be dispatched upon a
+            successful (non error) close of the <code>EventSource</code>. This
+            event does not come with any additional properties. This event isn't
+            fired if the network request had an error.
+          </p>
+        </li>
+        <li>
+          <p>
+            <code>error</code> is dispatched if the network request failed for
+            some reason, or if it was unable to be created for example due to
+            bad Request data. This can happen when streaming if the connection
+            errors, even after events have been sent. This event does not come
+            with any additional properties.
+          </p>
+        </li>
+        <li>
+          <p>
+            <code>loadend</code> is dispatched at the end of a request,
+            regardless of the end state of the request. In other words this will
+            always come directly after a <code>load</code> or <code>error</code>
+            event. This event does not come with any additional properties.
+          </p>
+        </li>
+        <li>
+          <p>
+            <code>beforeinsert</code> is dispatched right <em>before</em>the
+            contents are about to be inserted into the page. In streaming mode
+            this event could be fired many times. This comes with a
+            <code>.content</code> property which is an array of all the child
+            <code>Node</code>s about to be inserted into the element. If you
+            re-assign or otherwise mutate this array, then that is what will be
+            inserted. This is useful for doing extra sanitization or simply
+            removing elements with additional scripting. If you wan't to do
+            something even more radical, you can call
+            <code>.preventDefault()</code> and it will <em>not</em>
+            insert the contents, leaving it up to you what to do next. Other
+            events will continue to fire, and if in streaming mode, you may get
+            new data coming in.
+          </p>
+        </li>
+        <li>
+          <p>
+            <code>inserted</code> is dispatched right <em>after</em> the
+            contents have been inserted into the page, provided that
+            <code>beforeinsert</code> was not cancelled. In streaming mode this
+            event could be fired many times. This comes with a
+            <code>.content</code> property which is an array of all the child
+            <code>Node</code>s that were inserted - which may be different to
+            the elements <code>.childNodes</code>. This event is not
+            preventable, as the action has already happened.
+          </p>
+        </li>
+      </ul>
+
+      <h2 id="faq">Questions you might have</h2>
+
+      <h3 id="alternatives">What about using &lt;alternative>?</h3>
+
+      <p>
+        There are many elements like this, but none that are <em>quite</em> like
+        this. I think this is a culmination of the best features of the other
+        elements.
+      </p>
+
+      <h3 id="alternatives">What about using htmz?</h3>
+
+      <p>
+        <a href="https://leanrada.com/htmz">htmz</a> was a bit of an inspiration
+        for this element. It's a great lightweight way of leveraging platform
+        features, but it also lacks some real niceties that you'd want from a
+        component like this. This is why <code>&lt;i-html></code> exists - to
+        take the concepts of htmz and expand them into a fully-fledged element,
+        adding the missing features. If you're after a really tiny codebase and
+        leveraging as much of the web platform as possible, htmz looks to be a
+        great choice. If you're after something with a few more capabilities, I
+        think <code>&lt;i-html></code> is the best next step.
+      </p>
+
+      <h3 id="include-fragment">Why did you not extend include-fragment?</h3>
+
+      <p>
+        The
+        <a href="https://github.com/github/include-fragment-element"
+          >include-fragment-element</a
+        >
+        is very similar to this, and I'm the current maintainer of both, so it
+        is within my power (and hubris) to make changes to that element to make
+        it more like this element. However, I think they are spiritually
+        different elements. This element definitely builds upon the success of
+        <code>&lt;include-fragment></code>, but it also changes some design
+        decisions that aren't worth changing in
+        <code>&lt;include-fragment></code>, given its large user base and the
+        amount of churn it would take to make those changes. In that regard you
+        might consider this element a "rewrite" or a "major version bump" of
+        <code>&lt;include-fragment</code>, but I think both have a valid use
+        case and certainly both can co-exist, maybe even on the same website.
+      </p>
+
+      <h3 id="include-fragment-differences">
+        What are the differences between this and include-fragment then?
+      </h3>
+
+      <p>
+        Aside from the obvious difference being the name,
+        <code>&lt;inlude-fragment></code> has a smaller featureset, for example
+        it doesn't support streaming mode, it doesn't support custom CSS states,
+        it doesn't support preventing <code>loadstart</code> events. Those
+        things could be added, but then it also has some big differences that
+        are design decisions, and would be breaking changes.
+        <code>&lt;include-fragment></code> replaces <em>itself</em> on the page,
+        so a fully loaded fragment no longer exists on the page and the loaded
+        HTML stands in its place. This is different to
+        <code>&lt;i-html></code> which remains in the DOM, and can re-fetch
+        contents again and again. This design change gives the two elements very
+        different use cases, for example <code>&lt;i-html></code> respects link
+        and form <code>target=</code> attributes which would seem pointless to
+        do in <code>&lt;include-fragment></code> with this design choice in
+        mind.
+      </p>
+    </main>
+  </body>
+</html>
