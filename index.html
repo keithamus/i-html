@@ -6,30 +6,31 @@
     <script type="module" src="./i-html.js"></script>
   </head>
   <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica,
-        Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+    html {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+      max-width: 70ch;
+      margin: auto;
+      line-height: 1.5;
+      font-size: 1.125em;
+      overflow-wrap: break-word;
     }
     p {
-      max-width: 80ch;
+      max-width: 70ch;
       margin: 0.5rem 0;
     }
-    h1,
-    h2,
-    h3,
-    h4 {
+    h1, h2, h3, h4 {
       margin: 2rem 0 0 0;
-    }
-    h1:first-child {
-      margin-top: 1rem;
     }
     .demo {
       border: 1px solid black;
       border-radius: 8px;
-      width: fit-content;
+      max-width: 70ch;
       min-height: 1ch;
       padding: 1rem;
     }
+    mark {background:#ffec99}
+    mark[a] {background:#c3fae8}
+    mark[b] {background:#eebefa}
   </style>
   <body>
     <main>
@@ -60,6 +61,12 @@
         just an HTML page. There's nothing special about it. Look, go see for
         yourself: <a href="example-responses/hello.html">hello.html</a>.
       </p>
+
+      <pre>
+        <code>
+  &lt;i-html <mark>src="example-responses/hello.html"</mark>>Loading...&lt;/i-html>
+        </code>
+      </pre>
 
       <div class="demo">
         <i-html src="example-responses/hello.html">Loading...</i-html>
@@ -94,33 +101,56 @@
         demonstration:
       </p>
 
+      <pre>
+        <code>
+  &lt;a href="example-responses/hello.html" <mark>target="link-target-example"</mark>>
+    Load hello.html
+  &lt;/a>
+  &lt;a href="example-responses/how-are-you.html" <mark>target="link-target-example"</mark>>
+    Load how-are-you.html
+  &lt;/a>&lt;br>
+  &lt;i-html <mark>id="link-target-example"</mark>>&lt;/i-html>
+        </code>
+      </pre>
+
       <div class="demo">
-        <a href="example-responses/hello.html" target="link-target-example"
-          >Load hello.html</a
-        >
-        <a
-          href="example-responses/how-are-you.html"
-          target="link-target-example"
-          >Load how-are-you.html</a
-        >
-        <br />
+        <a href="example-responses/hello.html" target="link-target-example">
+          Load hello.html
+        </a>
+        <a href="example-responses/how-are-you.html" target="link-target-example">
+          Load how-are-you.html
+        </a><br>
         <i-html id="link-target-example"></i-html>
       </div>
 
+      <h3 id="form-target">Targeting with form</h3>
+
       <p>
-        Also like an iframe, <code>target=</code> on links is also respected.
+        Also like an iframe, <code>target=</code> on forms is also respected.
         This means forms can submit to an <code>&lt;i-html></code> element which
         will then load in new content. Here's a dummy form, for example:
       </p>
 
+      <pre>
+        <code>
+  &lt;form action="example-responses/form-save.html" method="get" <mark>target="form-target-example"</mark>>
+    &lt;label>
+      A form label:
+      &lt;input type="search" />
+    &lt;/label>
+    &lt;button type="submit">Submit&lt;/button>
+  &lt;/form>
+
+  &lt;p>Submitting the form will change the content below:&lt;/p>
+
+  &lt;i-html <mark>id="form-target-example"</mark>>Nothing yet&lt;/i-html>
+        </code>
+      </pre>
+
       <div class="demo">
-        <form
-          action="example-responses/form-save.html"
-          method="get"
-          target="form-target-example"
-        >
-          <label
-            >A form label:
+        <form action="example-responses/form-save.html" method="get" target="form-target-example">
+          <label>
+             A form label:
             <input type="search" />
           </label>
           <button type="submit">Submit</button>
@@ -131,19 +161,33 @@
         <i-html id="form-target-example">Nothing yet</i-html>
       </div>
 
+      <h3 id="form-wrap">Wrapping a form</h3>
+
       <p>
         Wrap a <code>&lt;form></code> tag in an <code>&lt;i-html></code> element
         and you'll have a form that replaces itself. Serve the same form back
         and you have an "AJAX style" form with no effort.
       </p>
+      
+      <pre>
+        <code>
+  &lt;i-html <mark>id="ajax-form-target-example"</mark>>
+    &lt;form action="example-responses/ajax-form.html" method="get" <mark>target="ajax-form-target-example"</mark>>
+      &lt;label>
+        A form label:
+        &lt;input type="search" />
+      &lt;/label>
+      &lt;button type="submit">Submit&lt;/button>
+    &lt;/form>
+
+    &lt;p>Submitting the form will change the whole form&lt;/p>
+  &lt;/i-html>
+        </code>
+      </pre>
 
       <div class="demo">
         <i-html id="ajax-form-target-example">
-          <form
-            action="example-responses/ajax-form.html"
-            method="get"
-            target="ajax-form-target-example"
-          >
+          <form action="example-responses/ajax-form.html" method="get" target="ajax-form-target-example">
             <label>
               A form label:
               <input type="search" />
@@ -155,10 +199,29 @@
         </i-html>
       </div>
 
+      <h3 id="form-actions">Form actions</h3>
+
       <p>
         Of course because <code>&lt;forms></code> work, so does
         <code>&lt;button formaction=</code>. Example:
       </p>
+
+      <pre>
+        <code>
+  &lt;form method="get" <mark>target="formaction-example"</mark>>
+    &lt;button <mark a>formaction="example-responses/form-delete.html"</mark> type="submit">
+      Delete
+    &lt;/button>
+    &lt;button <mark a>formaction="example-responses/form-save.html"</mark> type="submit">
+      Save
+    &lt;/button>
+  &lt;/form>
+
+  &lt;p>Submitting the form will change the content below:&lt;/p>
+
+  &lt;i-html <mark>id="formaction-example"</mark>>Nothing yet&lt;/i-html>
+        </code>
+      </pre>
 
       <div class="demo">
         <form method="get" target="formaction-example">
@@ -179,24 +242,25 @@
 
       <p>
         By default <code>&lt;i-html></code> will parse the response as HTML,
-        query for an element inside the response HTML, and insert the contents
-        of that element into the page. The query it uses is determined by the
-        <code>target=</code> attribute, which defaults to <code>'body'</code>.
-        If you find you want to take a different element from the response body
-        you can set <code>target=</code> to any valid <code>querySelecor</code>.
-        If <code>target=</code> is an invalid <code>querySelector</code> it'll
-        revert to <code>'body'</code>. You can check if a
+        and inject the <code>&lt;body></code> element's contents into itself.
+        This can be changed by altering the <code>target=</code> attribute on
+        <code>&lt;i-html></code> itself (which defaults to <code>'body>*'</code>
+        (or <code>'svg'</code> if <code>accept=</code> is an SVG mime)). If you
+        find you want to take a different element from the response body, set
+        <code>target=</code> to any valid <code>querySelecor</code>. If
+        <code>target=</code> is an invalid <code>querySelector</code> it'll
+        revert to <code>'body>*'</code>. You can check if a
         <code>target=</code> select is valid by using JavaScript to set
         <code>.target</code> and then read the value back out, for example:
       </p>
 
       <pre>
         <code>
-myEl.target = '/not a valid selector/' // this won't set:
-console.assert(myEl.accept === 'body')
+  myEl.target = '/not a valid selector/' // this won't set:
+  console.assert(myEl.target === 'body')
 
-myEl.accept = '.this[is]:valid' // this will set:
-console.assert(myEl.accept === '.this[is]:valid')
+  myEl.accept = '.this[is]:valid' // this will set:
+  console.assert(myEl.target === '.this[is]:valid')
         </code>
       </pre>
 
@@ -207,19 +271,27 @@ console.assert(myEl.accept === '.this[is]:valid')
         <code>target="p:first-child"</code>, the second with a
         <code>target="p:last-child"</code>.
       </p>
+      
+      <pre>
+        <code>
+  &lt;a href="example-responses/two-paragraphs.html" <mark>target="two-paragraphs-a"</mark>>
+    Load two-paragraphs.html into first target
+  &lt;/a>
+  &lt;a href="example-responses/two-paragraphs.html" <mark>target="two-paragraphs-b"</mark>>
+    Load two-paragraphs.html into first target
+  &lt;/a>
+  &lt;p>&lt;i-html <mark>id="two-paragraphs-a"</mark> <mark a>target="p:first-child"</mark>>&lt;/i-html>&lt;/p>
+  &lt;p>&lt;i-html <mark>id="two-paragraphs-b"</mark> <mark a>target="p:last-child"</mark>>&lt;/i-html>&lt;/p>
+        </code>
+      </pre>
 
       <div class="demo">
-        <a
-          href="example-responses/two-paragraphs.html"
-          target="two-paragraphs-a"
-          >Load two-paragraphs.html into first target</a
-        >
-        <a
-          href="example-responses/two-paragraphs.html"
-          target="two-paragraphs-b"
-          >Load two-paragraphs.html into first target</a
-        >
-
+        <a href="example-responses/two-paragraphs.html" target="two-paragraphs-a">
+          Load two-paragraphs.html into first target
+        </a>
+        <a href="example-responses/two-paragraphs.html" target="two-paragraphs-b">
+          Load two-paragraphs.html into first target
+        </a>
         <p><i-html id="two-paragraphs-a" target="p:first-child"></i-html></p>
         <p><i-html id="two-paragraphs-b" target="p:last-child"></i-html></p>
       </div>
@@ -229,32 +301,40 @@ console.assert(myEl.accept === '.this[is]:valid')
       <p>
         By default <code>&lt;i-html></code> will make a request using the header
         <code>Accept: text/html</code>. You can customise this by setting the
-        <code>accept=</code> attribute, but it is limited to certain values. It
-        only allows mimes of the type <code>text/html</code>,
-        <code>image/svg+xml</code>, <code>application/xml</code> or
-        <code>text/event-stream</code>. You can slightly customise these types
-        by setting the "subtype combination" or "parameter values", and it'll be
-        smart and make the request with those extras. This means
-        <code>application/xhtml+xml</code> will work, and the expected return
-        content-type must be <code>application/xml</code> or
-        <code>application/xhtml+xml</code> (but something like
+        <code>accept=</code> attribute, but it is limited to certain values:
+      </p>
+      <ul>
+        <li><code>text/html</code>.</li>
+        <li><code>image/svg+xml</code>.</li>
+        <li><code>application/xml</code>.</li>
+      </ul>
+      <p>
+        You can slightly customise these types by setting the "subtype combination"
+        or "parameter values", and it'll be smart and make the request with those
+        extras. This means <code>application/xhtml+xml</code> will work, and the
+        expected return content-type must be either <code>application/xml</code> or
+        <code>application/xhtml+xml</code> (but an entirely different sub-type like
         <code>application/atom+xml</code> will fail). Also more complex mime
         types like <code>text/fragment+html; charset=utf-8</code> will work, and
-        the server can respond with <code>text/html</code> or
-        <code>text/fragment+html</code>. However, a mime such as
-        <code>application/json</code> is an invalid type, and trying to set such
-        an invalid type will revert to <code>text/html</code>. You can check if
-        a type works by using JavaScript to set <code>.accept</code> and then
-        read the value back out, for example:
+        the server can respond with the generic <code>text/html</code> or the matching
+        sub-type of <code>text/fragment+html</code>.
+      </p>
+      <p>
+        Invalid mimes such as <code>application/json</code> will revert to
+        <code>text/html</code>. (If you want to get JSON you don't need this element).
+      </p>
+      <p>
+        You can check what type works by using JavaScript to set <code>.accept</code>
+        and then read the value back out, for example:
       </p>
 
       <pre>
         <code>
-myEl.accept = 'application/json' // this won't set:
-console.assert(myEl.accept === 'text/html')
+  myEl.accept = 'application/json' // this won't set:
+  console.assert(myEl.accept === 'text/html')
 
-myEl.accept = 'text/fragment+html; charset=utf-8' // this will set:
-console.assert(myEl.accept === 'text/fragment+html; charset=utf-8')
+  myEl.accept = 'text/fragment+html; charset=utf-8' // this will set:
+  console.assert(myEl.accept === 'text/fragment+html; charset=utf-8')
         </code>
       </pre>
 
@@ -264,6 +344,23 @@ console.assert(myEl.accept === 'text/fragment+html; charset=utf-8')
         parse the full response body. <code>text/event-stream</code> uses a
         different streaming mode...
       </p>
+
+      <pre>
+        <code>
+  &lt;a href="star-solid.svg" <mark>target="svg-example"</mark>>
+    &lt;i-html <mark>id="svg-example"</mark> src="example-responses/star.svg" <mark a>accept="image/svg+xml"</mark>>&lt;/i-html>
+  &lt;/a>
+        </code>
+      </pre>
+
+      <div class="demo">
+        <center>
+          <a href="example-responses/star-solid.svg" target="svg-example">
+            <i-html id="svg-example" src="example-responses/star.svg" accept="image/svg+xml"></i-html>
+          </a>
+        </center>
+      </div>
+
 
       <h3 id="streaming-mode">Streaming Mode</h3>
 
@@ -296,12 +393,26 @@ console.assert(myEl.accept === 'text/fragment+html; charset=utf-8')
         new content to be added before the current children:
       </p>
 
+      <pre>
+        <code>
+  &lt;a href="example-responses/prepend-list.html" <mark>target="prepend-example"</mark>>
+    Prepend to this list:
+  &lt;/a>
+  &lt;ul>
+    &lt;i-html <mark>id="prepend-example"</mark> <mark a>target="li"</mark> <mark b>insert="prepend"</mark>>
+      &lt;li>Milk&lt;/li>
+      &lt;li>Eggs&lt;/li>
+    &lt;/i-html>
+  &lt;/ul>
+        </code>
+      </pre>
+
       <div class="demo">
         <a href="example-responses/prepend-list.html" target="prepend-example">
           Prepend to this list:
         </a>
         <ul>
-          <i-html id="prepend-example" target="ul" insert="prepend">
+          <i-html id="prepend-example" target="li" insert="prepend">
             <li>Milk</li>
             <li>Eggs</li>
           </i-html>
@@ -330,6 +441,13 @@ console.assert(myEl.accept === 'text/fragment+html; charset=utf-8')
         occur, for example on click.
       </p>
 
+      <div class="demo">
+        <i-html id="lazy-example" loading="lazy" src="example-responses/lazy.html">
+          ... lazy loading ...
+        </i-html>
+      </div>
+
+
       <h3 id="styling">Styling</h3>
 
       <p>
@@ -355,20 +473,27 @@ console.assert(myEl.accept === 'text/fragment+html; charset=utf-8')
         </code>
       </pre>
 
-      <aside>
-        For older browsers that don't support
+      <details>
+        <summary>(For older browsers that don't support
         <a
           href="https://developer.mozilla.org/en-US/docs/Web/API/CustomStateSet"
           >CSS CustomStateSet</a
-        >
-        the element will fall back to using attributes like
-        <code>[state-waiting]</code>. Chrome version 90-124 used a different
-        syntax for <code>:state()</code>: like <code>:--waiting</code>. To
-        support all of these you'll need something more like:
+        > you'll need some additional CSS.)</summary>
 
-        <pre>
-          <code>
-            <style style="display:block">
+        <p>
+          The element will fall back to using attributes like
+          <code>[state-waiting]</code> in older browsers, such as Safari 17.3
+          and below, Firefox 125 and below, and Chrome 89 and below.
+        </p>
+        <p>
+          Chrome versions 90-124 used a different syntax for <code>:state()</code>,
+          which used double dashes instead, like <code>:--waiting</code>. There's
+          a small bit of support code to handle those versions and so it will fall
+          back to using syntax like <code>:--waiting</code> if it needs to. If you need to
+          support all of these you'll need something more like:
+        </p>
+
+        <pre><code><style style="display:block">
 .foo:where(:state(waiting), :--waiting, [state-waiting]) { background: grey; }
 .foo:where(:state(loading), :--loading, [state-loading]) { background: yellow; }
 .foo:where(:state(loaded), :--loaded, [state-loaded]) { background: green; }
@@ -376,7 +501,11 @@ console.assert(myEl.accept === 'text/fragment+html; charset=utf-8')
             </style>
           </code>
         </pre>
-      </aside>
+      </details>
+
+      <p>
+        Here are some details for what each of these states <em>mean</em>:
+      </p>
 
       <ul>
         <li>

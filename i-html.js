@@ -94,13 +94,18 @@ export class IHTMLElement extends HTMLElement {
     this.setAttribute('src', val)
   }
 
+  get #defaultTarget() {
+    if (svgMime.test(this.accept)) return 'svg'
+    return 'body > *'
+  }
+
   get target() {
-    const target = this.getAttribute('target') || 'body'
+    const target = this.getAttribute('target') || this.#defaultTarget
     try {
       this.matches(target)
       return target
     } catch {
-      return 'body'
+      return this.#defaultTarget
     }
   }
 
@@ -150,8 +155,8 @@ export class IHTMLElement extends HTMLElement {
         if (entry.isIntersecting) {
           const {target} = entry
           this.#observer.unobserve(target)
-          if (!(target instanceof IHTMLElement)) return
-          if (target.loading === 'lazy') {
+          if (!this.shadowRoot.contains(target)) return
+          if (this.loading === 'lazy') {
             this.#load()
           }
         }
@@ -174,6 +179,7 @@ export class IHTMLElement extends HTMLElement {
       this.attachShadow({mode: 'open'})
       this.shadowRoot.adoptedStyleSheets.push(styles)
       this.shadowRoot.append(document.createElement('slot'))
+      this.shadowRoot.append(document.createElement('span'))
     }
     this.#internals.states.add('waiting')
     this.#internals.role = 'presentation'
@@ -184,11 +190,13 @@ export class IHTMLElement extends HTMLElement {
       if (this.isConnected && this.loading === 'eager') {
         this.#load()
       } else if (this.loading !== 'eager') {
-        this.#fetchController().abort()
+        this.#fetchController?.abort()
       }
     } else if (name === 'loading') {
       if (this.isConnected && old !== 'eager' && value === 'eager') {
         this.#load()
+      } else if (this.isConnected && value === 'lazy') {
+        this.#observe()
       }
     }
   }
@@ -197,19 +205,22 @@ export class IHTMLElement extends HTMLElement {
     if (this.src && this.loading === 'eager') {
       this.#load()
     }
-    this.#observer.observe(this)
+    this.#observe()
     this.ownerDocument.addEventListener('click', handleLinkTargets, true)
     this.ownerDocument.addEventListener('submit', handleLinkTargets, true)
   }
 
   disconnectedCallback() {
-    this.#observer.unobserve(this)
-    this.#fetchController.abort('disconnected')
+    this.#fetchController?.abort('disconnected')
+  }
+
+  #observe() {
+    this.#observer.observe(this.shadowRoot.querySelector('span'))
   }
 
   async #load() {
     if (!this.hasAttribute('src')) return
-    if (!this.#fetchController.signal.aborted && this.#fetchController.src == this.src) return
+    if (!this.#fetchController?.signal.aborted && this.#fetchController?.src == this.src) return
     this.#fetchController.abort()
     this.#fetchController = new AbortController();
     this.#fetchController.src = this.src
@@ -305,9 +316,9 @@ export class IHTMLElement extends HTMLElement {
 
   #parseAndInject(responseText, mime) {
     const doc = new DOMParser().parseFromString(responseText, mime)
-    const children = doc.querySelector(this.target).childNodes
+    const children = doc.querySelectorAll(this.target)
     const beforeInsert = new InsertEvent('beforeinsert', children, { cancelable: true })
-    const shouldContinue = this.dispatchEvent(beforeInsert)
+    const shouldContinue = this.dispatchEvent(beforeInsert) && children.length
     if (!shouldContinue) {
       return
     }
