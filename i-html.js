@@ -83,8 +83,10 @@ const xmlMime = /^application\/([^+]+\+)?xml\s*(?:;.*)?$/
 const eventStreamMime = /^text\/([^+]+\+)?event-stream\s*(?:;.*)?$/
 const wildcardMime = /^\*\/(?:[^+]+\+)?\*\s*(?:;.*)?$/
 
+const validAllow = new Set(['refresh']);
+
 export class IHTMLElement extends HTMLElement {
-  static observedAttributes = ['src', 'accept', 'loading']
+  static observedAttributes = ['src', 'accept', 'loading', 'allow']
 
   get src() {
     return new URL(this.getAttribute('src') || '', window.location.href).toString()
@@ -111,6 +113,16 @@ export class IHTMLElement extends HTMLElement {
 
   set target(value) {
     this.setAttribute('target', value)
+  }
+
+  #allow = new Set()
+  get allow() {
+    return Array.from(this.#allow).join(' ')
+  }
+
+  set allow(value) {
+    this.setAttribute('allow', value)
+    this.#allow = new Set(String(value).split(/ /g).filter(allow => validAllow.has(allow)))
   }
 
   get insert() {
@@ -198,6 +210,8 @@ export class IHTMLElement extends HTMLElement {
       } else if (this.isConnected && value === 'lazy') {
         this.#observe()
       }
+    } else if (name === 'allow') {
+      this.#allow = new Set(String(value).split(/ /g).filter(allow => validAllow.has(allow)))
     }
   }
 
@@ -206,8 +220,20 @@ export class IHTMLElement extends HTMLElement {
       this.#load()
     }
     this.#observe()
+    this.addEventListener('command', this)
     this.ownerDocument.addEventListener('click', handleLinkTargets, true)
     this.ownerDocument.addEventListener('submit', handleLinkTargets, true)
+  }
+
+  handleEvent(event) {
+    if (event.type == 'command') {
+      if (event.command == '--load') {
+        this.#load();
+      } else if (event.command == '--stop') {
+        clearTimeout(this.#refreshTimer)
+        this.#fetchController?.abort('stop')
+      }
+    }
   }
 
   disconnectedCallback() {
@@ -218,12 +244,26 @@ export class IHTMLElement extends HTMLElement {
     this.#observer.observe(this.shadowRoot.querySelector('span'))
   }
 
-  async #load() {
-    if (!this.hasAttribute('src')) return
-    if (!this.#fetchController?.signal.aborted && this.#fetchController?.src == this.src) return
+  #refreshTimer = null
+  #setupRefresh(refresh) {
+    if (!this.#allow.has('refresh')) return
+    let [time, url] = String(refresh).split(/;\s*url=/) || []
+    time = time ? Number(time) : -1
+    url = new URL(url, this.src)
+    clearTimeout(this.#refreshTimer)
+    if (time > -1 && time < Number.MAX_SAFE_INTEGER) {
+      this.#refreshTimer = setTimeout(() => this.#load(url), Number(time) * 1000)
+    }
+  }
+
+  async #load(src) {
+    if (!src && !this.hasAttribute('src')) return
+    src ||= this.src
+    if (!this.#fetchController?.signal.aborted && this.#fetchController?.src == src) return
+    clearTimeout(this.#refreshTimer);
     this.#fetchController.abort()
     this.#fetchController = new AbortController();
-    this.#fetchController.src = this.src
+    this.#fetchController.src = src
     this.#internals.states.delete('error')
     this.#internals.states.delete('waiting')
     this.#internals.states.add('loading')
@@ -233,7 +273,7 @@ export class IHTMLElement extends HTMLElement {
     await queueATask()
     let error = false
     try {
-      const request = new RequestEvent(new Request(this.src, {
+      const request = new RequestEvent(new Request(src, {
         method: 'GET',
         credentials: 'same-origin',
         headers: {
@@ -298,6 +338,8 @@ export class IHTMLElement extends HTMLElement {
     if (!response) {
       throw new Error(`Failed to load response`)
     }
+
+    this.#setupRefresh(response.headers.get('Refresh') || '')
     const ct = response.headers.get('Content-Type') || ''
     const accept = this.accept
     if (!wildcardMime.test(accept)) {
@@ -307,6 +349,7 @@ export class IHTMLElement extends HTMLElement {
         throw new Error(`Failed to load resource: expected ${accept} but was ${ct}`)
       }
     }
+
     let resolvedCt = htmlMime.test(ct) ? 'text/html' : xmlMime.test(ct) ? 'application/xml' : svgMime.test(ct) ? 'image/svg+xml' : null
     if (!resolvedCt) {
       throw new Error(`Failed to load resource: expected mime to be like 'text/html', 'application/xml' or 'image/svg+xml', but got ${ct || '(empty string)'}`)
@@ -316,6 +359,7 @@ export class IHTMLElement extends HTMLElement {
 
   #parseAndInject(responseText, mime) {
     const doc = new DOMParser().parseFromString(responseText, mime)
+    this.#setupRefresh(doc.querySelector('meta[http-equiv="refresh"]')?.content || '')
     const children = doc.querySelectorAll(this.target)
     const beforeInsert = new InsertEvent('beforeinsert', children, { cancelable: true })
     const shouldContinue = this.dispatchEvent(beforeInsert) && children.length

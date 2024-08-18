@@ -4,6 +4,7 @@
     <title>i-html, an inline-html import element</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <script type="module" src="./i-html.js"></script>
+    <script type="module" src="https://unpkg.com/invokers-polyfill@0.4.2/invoker.js"></script>
   </head>
   <style>
     html {
@@ -306,6 +307,74 @@
         <p><i-html id="two-paragraphs-b" target="p:last-child"></i-html></p>
       </div>
 
+      <h3 id="re-fetching">Refetching</h3>
+
+      <p>
+        If you want to refetch the contents there are several options. The
+        simplest is to use an <code>&lt;a href></code> element, as clicking the
+        link will cause <code>&lt;i-html></code> to load each time.
+      </p>
+
+      <p>
+        That's not always the easiest though, and so another option is to use a
+        <code>&lt;button command="--load" commandfor=".."></code> element,
+        which will cause the <code>&lt;i-html></code> to load the
+        <code>src</code> it has (regardless of the <code>loading=</code> value,
+        see <a href="#deferring-loading">Deferring Loading</a> for more on
+        that).
+      </p>
+
+      <details>
+        <summary>(For older browsers that don't support command/commandfor buttons)</summary>
+        <p>
+          You'll need to drop in the "invokers-polyfill" package to polyfill
+          this in older browsers.
+        </p>
+        <pre><code>
+          &lt;script type="module" src="https://unpkg.com/invokers-polyfill@0.4.2/invoker.js">
+          &lt;/script>
+        </code></pre>
+      </details>
+
+      <pre>
+        <code>
+  &lt;button <mark>command="--load" commandfor="command-load-example"</mark>>Load&lt;/button>
+  &lt;i-html <mark>id="command-load-example"</mark> src="example-responses/hello.html">&lt;/i-html>
+        </code>
+      </pre>
+
+      <div class="demo">
+        <button command="--load" commandfor="command-load-example">Load</button>
+        <i-html id="command-load-example" src="example-responses/hello.html"></i-html>
+      </div>
+
+      <p>
+        Responses can indicate to the client when the content should refresh by
+        adding a `Refresh` header (or a <code>&lt;meta http-equiv=refresh></code>
+        meta tag), telling <code>&lt;i-html></code> to refresh after N seconds.
+        This is <em>opt-in</em> though, and needs the <code>allow=refresh</code>
+        attribute on the element.
+      </p>
+      <p>
+        The `Refresh` header can also have a URL to traverse to. This is also
+        respected, which can make for some interesting properties such as the
+        example below. Lastly, this can be stopped with
+        <code>&lt;button command="--stop"</code>:
+      </p>
+
+      <pre>
+        <code>
+  &lt;button <mark>command="--stop" commandfor="refresh-example"</mark>>Stop&lt;/button>
+  &lt;i-html <mark b>allow="refresh"</mark> <mark>id="refresh-example"</mark> src="example-responses/refresh.html">&lt;/i-html>
+        </code>
+      </pre>
+
+      <div class="demo">
+        <button command="--stop" commandfor="refresh-example">Stop</button>
+        <i-html allow="refresh" loading="lazy" id="refresh-example" src="example-responses/refresh.html"></i-html>
+      </div>
+
+
       <h3 id="content-negotiation">Content negotiation</h3>
 
       <p>
@@ -449,6 +518,12 @@
         <code>loading=eager</code> or <code>loading=lazy</code>. This gives you
         an opportunity to use JavaScript to determine when the loading should
         occur, for example on click.
+      </p>
+
+      <p>
+        A <code>&lt;button command="--load" commandfor=".."></code> element
+        pointing to a, <code>&lt;i-html></code> element will force it to load,
+        regardless of the <code>loading=</code> value.
       </p>
 
       <div class="demo">
