@@ -249,7 +249,7 @@ export class IHTMLElement extends HTMLElement {
     if (!this.#allow.has('refresh')) return
     let [time, url] = String(refresh).split(/;\s*url=/) || []
     time = time ? Number(time) : -1
-    url = new URL(url, this.src)
+    url = new URL(url || '', this.src)
     clearTimeout(this.#refreshTimer)
     if (time > -1 && time < Number.MAX_SAFE_INTEGER) {
       this.#refreshTimer = setTimeout(() => this.#load(url), Number(time) * 1000)
