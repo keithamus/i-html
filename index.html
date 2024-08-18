@@ -28,9 +28,19 @@
       min-height: 1ch;
       padding: 1rem;
     }
+      a { color: #3b5bdb }
+      a:visited { color: #6741d9 }
     mark {background:#ffec99}
     mark[a] {background:#c3fae8}
     mark[b] {background:#eebefa}
+    @media (prefers-color-scheme: dark) {
+      html {
+        background: #343a40;
+        color: #f8f9fa;
+      }
+      a { color: #748ffc }
+      a:visited { color: #9775fa }
+    }
   </style>
   <body>
     <main>
