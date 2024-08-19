@@ -50,7 +50,7 @@ styles.replace(`
 export class RequestEvent extends Event {
   request = null
   constructor(request) {
-    super('loadstart', {});
+    super('loadstart', {})
     this.request = request
   }
 }
@@ -58,7 +58,7 @@ export class RequestEvent extends Event {
 export class InsertEvent extends Event {
   content = null
   constructor(name, content, init) {
-    super(name, init);
+    super(name, init)
     this.content = content
   }
 }
@@ -83,7 +83,7 @@ const xmlMime = /^application\/([^+]+\+)?xml\s*(?:;.*)?$/
 const eventStreamMime = /^text\/([^+]+\+)?event-stream\s*(?:;.*)?$/
 const wildcardMime = /^\*\/(?:[^+]+\+)?\*\s*(?:;.*)?$/
 
-const validAllow = new Set(['refresh']);
+const validAllow = new Set(['refresh', 'iframe', 'i-html', 'media', 'script', 'style', 'cross-origin'])
 
 export class IHTMLElement extends HTMLElement {
   static observedAttributes = ['src', 'accept', 'loading', 'allow']
@@ -94,6 +94,16 @@ export class IHTMLElement extends HTMLElement {
 
   set src(val) {
     this.setAttribute('src', val)
+  }
+
+  get credentials(){
+    let credentials = this.getAttribute('credentials')
+    if (credentials == 'include' || credentials == 'omit') return credentials
+    return 'same-origin'
+  }
+
+  set credentials(value) {
+    this.setAttribute(credentials, value)
   }
 
   get #defaultTarget() {
@@ -122,6 +132,7 @@ export class IHTMLElement extends HTMLElement {
 
   set allow(value) {
     this.setAttribute('allow', value)
+    if (value == '*') value = [...validAllow].join(' ')
     this.#allow = new Set(String(value).split(/ /g).filter(allow => validAllow.has(allow)))
   }
 
@@ -228,7 +239,7 @@ export class IHTMLElement extends HTMLElement {
   handleEvent(event) {
     if (event.type == 'command') {
       if (event.command == '--load') {
-        this.#load();
+        this.#load()
       } else if (event.command == '--stop') {
         clearTimeout(this.#refreshTimer)
         this.#fetchController?.abort('stop')
@@ -249,7 +260,6 @@ export class IHTMLElement extends HTMLElement {
     if (!this.#allow.has('refresh')) return
     let [time, url] = String(refresh).split(/;\s*url=/) || []
     time = time ? Number(time) : -1
-    url = new URL(url || '', this.src)
     clearTimeout(this.#refreshTimer)
     if (time > -1 && time < Number.MAX_SAFE_INTEGER) {
       this.#refreshTimer = setTimeout(() => this.#load(url), Number(time) * 1000)
@@ -258,12 +268,16 @@ export class IHTMLElement extends HTMLElement {
 
   async #load(src) {
     if (!src && !this.hasAttribute('src')) return
-    src ||= this.src
-    if (!this.#fetchController?.signal.aborted && this.#fetchController?.src == src) return
-    clearTimeout(this.#refreshTimer);
+    src = new URL(src || this.src, this.src || window.location.href)
+    if (!this.#allow.has('cross-origin') && src.origin !== window.location.origin) {
+      console.log(src, window.location.origin);
+      throw new Error(`i-html failed to load cross origin resource ${src} without allow=cross-origin`)
+    }
+    if (!this.#fetchController?.signal.aborted && this.#fetchController?.src == src.toString()) return
+    clearTimeout(this.#refreshTimer)
     this.#fetchController.abort()
-    this.#fetchController = new AbortController();
-    this.#fetchController.src = src
+    this.#fetchController = new AbortController()
+    this.#fetchController.src = src.toString()
     this.#internals.states.delete('error')
     this.#internals.states.delete('waiting')
     this.#internals.states.add('loading')
@@ -275,7 +289,7 @@ export class IHTMLElement extends HTMLElement {
     try {
       const request = new RequestEvent(new Request(src, {
         method: 'GET',
-        credentials: 'same-origin',
+        credentials: this.credentials,
         headers: {
           Accept: this.accept,
         },
@@ -328,7 +342,7 @@ export class IHTMLElement extends HTMLElement {
 
   async #loadOnce(request) {
     const signal = this.#fetchController.signal
-    let response;
+    let response
     try {
       response = await fetch(request, {signal})
     } catch (e) {
@@ -360,13 +374,13 @@ export class IHTMLElement extends HTMLElement {
   #parseAndInject(responseText, mime) {
     const doc = new DOMParser().parseFromString(responseText, mime)
     this.#setupRefresh(doc.querySelector('meta[http-equiv="refresh"]')?.content || '')
-    const children = doc.querySelectorAll(this.target)
+    const children = this.#sanitize(doc).querySelectorAll(this.target)
     const beforeInsert = new InsertEvent('beforeinsert', children, { cancelable: true })
     const shouldContinue = this.dispatchEvent(beforeInsert) && children.length
     if (!shouldContinue) {
       return
     }
-    const activeElement = this.ownerDocument.activeElement;
+    const activeElement = this.ownerDocument.activeElement
     activeElement.blur()
     if (this.insert === 'append') {
       this.append(...beforeInsert.content)
@@ -377,6 +391,20 @@ export class IHTMLElement extends HTMLElement {
     }
     activeElement.focus()
     this.dispatchEvent(new InsertEvent('inserted', this.childNodes))
+  }
+
+  #sanitize(doc) {
+    let removes = []
+    const allows = this.#allow
+    if (!this.#allow.has('iframe')) removes.push('iframe')
+    if (!this.#allow.has('i-html')) removes.push('i-html')
+    if (!this.#allow.has('script')) removes.push('script')
+    if (!this.#allow.has('style')) removes.push('style', 'link[rel=stylesheet]')
+    if (!this.#allow.has('media')) removes.push('img', 'picture', 'video', 'audio', 'object')
+    if (removes.length) {
+      for(const el of doc.querySelectorAll(removes.join(', '))) el.remove()
+    }
+    return doc
   }
 }
 

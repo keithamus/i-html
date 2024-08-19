@@ -7,6 +7,13 @@
     <script type="module" src="https://unpkg.com/invokers-polyfill@0.4.2/invoker.js"></script>
   </head>
   <style>
+    :root {
+      --background: #f1f3f5;
+      --color: #212529;
+      --link-color: #3b5bdb;
+      --link-visited-color: #6741d9;
+      --border-color: #212529;
+    }
     html {
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
       max-width: 70ch;
@@ -14,7 +21,11 @@
       line-height: 1.5;
       font-size: 1.125em;
       overflow-wrap: break-word;
+      background: var(--background);
+      color: var(--color);
     }
+    a { color: var(--link-color) }
+    a:visited { color: var(--link-visited-color) }
     p {
       max-width: 70ch;
       margin: 0.5rem 0;
@@ -23,24 +34,23 @@
       margin: 2rem 0 0 0;
     }
     .demo {
-      border: 1px solid black;
+      border: 1px solid var(--border-color);
       border-radius: 8px;
       max-width: 70ch;
       min-height: 1ch;
       padding: 1rem;
     }
-      a { color: #3b5bdb }
-      a:visited { color: #6741d9 }
     mark {background:#ffec99}
     mark[a] {background:#c3fae8}
     mark[b] {background:#eebefa}
     @media (prefers-color-scheme: dark) {
-      html {
-        background: #343a40;
-        color: #f8f9fa;
+      :root {
+        --background: #343a40;
+        --color: #f8f9fa;
+        --link-color: #748ffc;
+        --link-visited-color: #9775fa;
+        --border-color: #f8f9fa;
       }
-      a { color: #748ffc }
-      a:visited { color: #9775fa }
     }
   </style>
   <body>
@@ -532,6 +542,164 @@
         </i-html>
       </div>
 
+      <h3 id="security">Security</h3>
+
+      <p>
+        Injecting arbitrary HTML into a page can pose some security risks, so
+        it's important that there's a <em>defence in depth</em> approach to
+        mitigating the risk surface area. <code>&lt;i-html></code> has some
+        security provisions in place but it's important to not only lean on
+        these, and also apply additional security measures:
+      </p>
+
+      <ul>
+        <li>
+          Use a <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP">
+            Content Security Policy
+          </a>. A good minimum default is <code>script-src self</code>, which
+          will prevent JavaScript from executing unless it's served by the same
+          origin, and only from <code>&lt;script></code> tags, not inline
+          attributes such as <code>onclick</code>.
+        </li>
+        <li>
+          Consider how to <a href="https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html">
+            protect against CSRF
+          </a>. A good measure would be HTTP-only session cookies to protect
+          sensitive resources.
+        </li>
+        <li>
+          Fine tune your <a href="https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS">
+            CORS policies
+          </a> to protect against injecting pages you might not want
+          <code>&lt;i-html></code> to embed.
+        </li>
+      </ul>
+
+      <p>
+        With that out of the way, let's talk about the protections
+        <code>&lt;i-html></code> has in place. It uses <code>fetch()</code>
+        under-the-hood and so must adhere to CORS policies. By default the
+        <code>credentials</code> option is set to <code>'same-origin'</code>
+        meaning it will send cookies (and respect the <code>Set-Cookie</code>
+        response header) for same-orign requests. To lock this down down further
+        setting <code>credentials="omit"</code> will never send/recieve cookies,
+        and setting <code>credentials="include"</code> will open it up to
+        sending/receiving cookies in cross-origin requests.
+      </p>
+
+      <p>
+        The default behaviour of <code>&lt;i-html></code> is restricted in some
+        ways, and these restrictions can be lifted by adding keywords into the
+        <code>allow=</code> attribute. This attribute takes a space-separated
+        list of well-known keywords, and each one will allow a certain type of
+        previously restricted behaviour to happen. The keywords can be combined,
+        so for example <code>allow="refresh media cross-origin"</code> is a
+        valid value.
+      </p>
+
+      <h4 id="cross-origin">Cross Origin (<code>allow="cross-origin"</code>)</h4>
+
+      <p>
+        The default behaviour of <code>&lt;i-html></code> is to <em>only</em>
+        fetch same-origin URLs. This means
+        <code>&lt;i-html src="https://other-site"></code> won't actually do
+        anything, as you'll need to allow cross-origin requests explicitly.
+        This can be done with the <code>allow="cross-origin"</code> attribute.
+      </p>
+
+      <p>
+        It is important to note that <code>allow="cross-origin"</code> only
+        impacts the <em>initial fetch</em>. Without
+        <code>allow="cross-origin"</code> a page may still have URLs or
+        resources (such as images) to other origins, and these will be rendered
+        regardless of this setting.
+      </p>
+
+      <h4 id="sanitization">Sanitization</h4>
+
+      <p>
+        <code>&lt;i-html></code> will never explicitly append certain elements
+        into the page, unless you opt in. For example if a response contains an
+        <code>&lt;iframe></code> element, this will simply be deleted before
+        the contents are injected. If you want <code>&lt;iframe></code>
+        elements to be injected, you'll need to add the
+        <code>allow="iframe"</code> attribute to the element.
+        <code>&lt;iframe></code>s aren't the only elements that get sanitized.
+        In fact, there are quite a few. Anything that fetches a sub-resource
+        will be sanitized out by default, only to be opted in with an
+        <code>allow=</code> attribute.
+      </p>
+
+      <dl>
+        <dt><code>allow="iframe"</code></dt>
+        <dd>
+          This allows the rendering of <code>&lt;iframe></code> elements in the
+          response body.
+        </dd>
+
+        <dt><code>allow="i-html"</code></dt>
+        <dd>
+          This allows the rendering of <code>&lt;i-html></code> elements in the
+          response body.
+        </dd>
+
+        <dt><code>allow="script"</code></dt>
+        <dd>
+          This allows the rendering of <code>&lt;script></code> elements in the
+          response body.
+        </dd>
+
+        <dt><code>allow="style"</code></dt>
+        <dd>
+          This allows the rendering of <code>&lt;style></code> and
+          <code>&lt;link rel=stylesheet</code> elements in the response body.
+        </dd>
+
+        <dt><code>allow="media"</code></dt>
+        <dd>
+          This allows the rendering of <code>&lt;img></code>,
+          <code>&lt;picture></code>, <code>&lt;video></code> 
+          <code>&lt;audio></code>, and <code>&lt;object></code> elements in the
+          response body.
+        </dd>
+      </dl>
+
+      <pre>
+        <code>
+  &lt;i-html <mark>src="example-responses/sanitization.html"</mark> <mark b>allow="media"</mark>>&lt;/i-html>
+        </code>
+      </pre>
+
+      <div class="demo">
+        <i-html src="example-responses/sanitization.html" allow="media"></i-html>
+      </div>
+
+      <pre>
+        <code>
+  &lt;a target="theme-switcher" href="example-responses/theme-pink.html">Switch to pink theme&lt;/a>&lt;br>
+  &lt;a target="theme-switcher" href="example-responses/theme-yellow.html">Switch to yellow theme&lt;/a>&lt;br>
+  &lt;a target="theme-switcher" href="example-responses/theme-gray.html">Switch to grayscale theme&lt;/a>&lt;br>
+  &lt;a target="theme-switcher" href="example-responses/empty.html">Reset theme&lt;/a>&lt;br>
+  &lt;i-html id="theme-switcher" allow="style">&lt;/i-html>
+        </code>
+      </pre>
+
+      <div class="demo">
+        <a target="theme-switcher" href="example-responses/theme-pink.html">Switch to pink theme</a><br>
+        <a target="theme-switcher" href="example-responses/theme-yellow.html">Switch to yellow theme</a><br>
+        <a target="theme-switcher" href="example-responses/theme-gray.html">Switch to grayscale theme</a><br>
+        <a target="theme-switcher" href="example-responses/empty.html">Reset theme</a><br>
+        <i-html id="theme-switcher" allow="style"></i-html>
+      </div>
+
+
+      <h4 id="turning-off-protections">Tuning off protections</h4>
+
+      <p>
+        Of course, if you like to live dangerously, you can turn all of this off
+        by setting <code>allow="*"</code>. This is a very bad idea but can be
+        useful during development.
+      </p>
 
       <h3 id="styling">Styling</h3>
 
@@ -735,18 +903,22 @@
         elements.
       </p>
 
-      <h3 id="alternatives">What about using htmz?</h3>
+      <h3 id="alternatives">What about using htmx / htmz?</h3>
 
       <p>
-        <a href="https://leanrada.com/htmz">htmz</a> was a bit of an inspiration
-        for this element. It's a great lightweight way of leveraging platform
-        features, but it also lacks some real niceties that you'd want from a
-        component like this. This is why <code>&lt;i-html></code> exists - to
-        take the concepts of htmz and expand them into a fully-fledged element,
-        adding the missing features. If you're after a really tiny codebase and
-        leveraging as much of the web platform as possible, htmz looks to be a
-        great choice. If you're after something with a few more capabilities, I
-        think <code>&lt;i-html></code> is the best next step.
+        <a href="https://htmx.org/">htmx</a> and
+        <a href="https://leanrada.com/htmz">htmz</a> came as small inspiration
+        for this library. htmx is a great project which demonstrates the power
+        of leveraging HTML, and htmz is a great lightweight alternative that
+        leans into the web platform even futher, but it also lacks some real
+        niceties that you'd want from a component like this. This is why
+        <code>&lt;i-html></code> exists - to take the concepts of htmz and
+        expand them into a fully-fledged element, adding the missing features.
+        If you want a fully featured and more popular library, try htmx.
+        If you're after a really tiny codebase and leveraging as much of the
+        web platform as possible, htmz looks to be a great choice. If you're
+        after something a little bit in-between, I think <code>&lt;i-html></code>
+        is the best next step.
       </p>
 
       <h3 id="include-fragment">Why did you not extend include-fragment?</h3>
