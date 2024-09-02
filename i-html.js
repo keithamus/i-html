@@ -380,8 +380,7 @@ export class IHTMLElement extends HTMLElement {
     if (!shouldContinue) {
       return
     }
-    const activeElement = this.ownerDocument.activeElement
-    activeElement.blur()
+    const oldActiveElement = this.ownerDocument.activeElement
     if (this.insert === 'append') {
       this.append(...beforeInsert.content)
     } else if (this.insert === 'prepend') {
@@ -389,7 +388,10 @@ export class IHTMLElement extends HTMLElement {
     } else {
       this.replaceChildren(...beforeInsert.content)
     }
-    activeElement.focus()
+    const activeElement = this.ownerDocument.activeElement
+    if (activeElement != oldActiveElement) {
+      activeElement.focus({ preventScroll: true })
+    }
     this.dispatchEvent(new InsertEvent('inserted', this.childNodes))
   }
 
