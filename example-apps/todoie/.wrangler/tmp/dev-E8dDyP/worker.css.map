@@ -1,8 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../../index.css"],
-  "sourceRoot": "/home/keith/Code/i-html/example-apps/todoie/.wrangler/tmp/dev-E8dDyP",
-  "sourcesContent": ["body {\n}\n\n.card {\n  border: 1px solid hsl(var(--brand-hue) 10% 50% / 15%);\n  box-shadow: 0 1rem .5rem -.5rem;\n  box-shadow: 0 2.8px 2.2px hsl(var(--gray-8-hsl) / calc(2% + 3%)), 0 6.7px 5.3px hsl(var(--gray-8-hsl) / calc(2% + 1%)), 0 12.5px 10px hsl(var(--gray-8-hsl) / calc(2% + 2%)), 0 22.3px 17.9px hsl(var(--gray-8-hsl) / calc(2% + 2%)), 0 41.8px 33.4px hsl(var(--gray-8-hsl) / calc(2% + 3%)), 0 100px 80px hsl(var(--gray-8-hsl) / 2%);\n  box-shadow: 0 2.8px 2.2px hsl(var(--surface-shadow) / calc(var(--shadow-strength) + 3%)), 0 6.7px 5.3px hsl(var(--surface-shadow) / calc(var(--shadow-strength) + 1%)), 0 12.5px 10px hsl(var(--surface-shadow) / calc(var(--shadow-strength) + 2%)), 0 22.3px 17.9px hsl(var(--surface-shadow) / calc(var(--shadow-strength) + 2%)), 0 41.8px 33.4px hsl(var(--surface-shadow) / calc(var(--shadow-strength) + 3%)), 0 100px 80px hsl(var(--surface-shadow) / var(--shadow-strength));\n}\n"],
-  "mappings": ";AAAA;AAAA;AAGA;AACE;AACA;AACA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AACA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;AAAA;",
-  "names": []
-}
