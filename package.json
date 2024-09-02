@@ -1,6 +1,6 @@
 {
   "name": "i-html-element",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "A drop-in tag that allows for dynamically importing html, inline. It's a bit like an <iframe>, except the html gets adopted into the page.",
   "main": "i-html.js",
   "scripts": {
