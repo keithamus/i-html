@@ -77,6 +77,7 @@ function handleLinkTargets(event) {
   }
 }
 
+const textMime = /^text\/([^+]+\+)?plain\s*(?:;.*)?$/
 const htmlMime = /^text\/([^+]+\+)?html\s*(?:;.*)?$/
 const svgMime = /^image\/(svg\+)xml\s*(?:;.*)?$/
 const xmlMime = /^application\/([^+]+\+)?xml\s*(?:;.*)?$/
@@ -159,6 +160,7 @@ export class IHTMLElement extends HTMLElement {
 
   get accept() {
     const accept = this.getAttribute('accept') || ''
+    if (textMime.test(accept)) return accept
     if (htmlMime.test(accept)) return accept
     if (svgMime.test(accept)) return accept
     if (xmlMime.test(accept)) return accept
@@ -357,14 +359,14 @@ export class IHTMLElement extends HTMLElement {
     const ct = response.headers.get('Content-Type') || ''
     const accept = this.accept
     if (!wildcardMime.test(accept)) {
-      let ctParts = (ct.match(htmlMime) || ct.match(xmlMime) || ct.match(svgMime) || [])[1]
+      let ctParts = (ct.match(htmlMime) || ct.match(textMime) || ct.match(xmlMime) || ct.match(svgMime) || [])[1]
       let acceptParts = (accept.match(htmlMime) || accept.match(xmlMime) || accept.match(svgMime) || [])[1]
       if (ctParts && ctParts !== acceptParts) {
         throw new Error(`Failed to load resource: expected ${accept} but was ${ct}`)
       }
     }
 
-    let resolvedCt = htmlMime.test(ct) ? 'text/html' : xmlMime.test(ct) ? 'application/xml' : svgMime.test(ct) ? 'image/svg+xml' : null
+    let resolvedCt = htmlMime.test(ct) ? 'text/html' : textMime.test(ct) ? 'text/plain' : xmlMime.test(ct) ? 'application/xml' : svgMime.test(ct) ? 'image/svg+xml' : null
     if (!resolvedCt) {
       throw new Error(`Failed to load resource: expected mime to be like 'text/html', 'application/xml' or 'image/svg+xml', but got ${ct || '(empty string)'}`)
     }
@@ -372,9 +374,18 @@ export class IHTMLElement extends HTMLElement {
   }
 
   #parseAndInject(responseText, mime) {
-    const doc = new DOMParser().parseFromString(responseText, mime)
-    this.#setupRefresh(doc.querySelector('meta[http-equiv="refresh"]')?.content || '')
-    const children = this.#sanitize(doc).querySelectorAll(this.target)
+    let children;
+    if (mime == 'text/plain') {
+      const doc = new DOMParser().parseFromString('<!DOCTYPE html>', 'text/html')
+      const span = document.createElement('span')
+      span.textContent = responseText;
+      doc.body.append(span)
+      children = doc.querySelectorAll('span')
+    } else {
+      const doc = new DOMParser().parseFromString(responseText, mime)
+      this.#setupRefresh(doc.querySelector('meta[http-equiv="refresh"]')?.content || '')
+      children = this.#sanitize(doc).querySelectorAll(this.target)
+    }
     const beforeInsert = new InsertEvent('beforeinsert', children, { cancelable: true })
     const shouldContinue = this.dispatchEvent(beforeInsert) && children.length
     if (!shouldContinue) {
