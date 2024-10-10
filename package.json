@@ -5,7 +5,8 @@
   "main": "i-html.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepack": "npx esbuild --target=es2020 --minify --bundle i-html.js > i-html.min.js"
+    "prepack": "npx esbuild --target=es2020 --minify --bundle i-html.js > i-html.min.js",
+    "prepublishOnly": "npm run prepack"
   },
   "files": [
     "*.js"
