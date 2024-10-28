@@ -724,6 +724,18 @@
         useful during development.
       </p>
 
+      <h3 id="dsd">Declarative Shadow DOM</h3>
+
+      <p>
+        Support for parsing fragments of HTML which include declarative shadow DOM (DSD) templates via <code>Document.parseHTMLUnsafe</code> <a href="https://developer.mozilla.org/en-US/docs/Web/API/Document/parseHTMLUnsafe_static">recently entered Baseline 2024 status</a>, so <code>&lt;i-html></code> will use that method of parsing if supported. Older browsers would need a polyfill to handle those cases, otherwise, <code>&lt;i-html></code> will fall back on <code>new DOMParser().parseFromString</code> which does not support DSD.
+      </p>
+
+      <div class="demo">
+        <i-html id="dsd-example" loading="lazy" src="example-responses/dsd.html">
+          ... loading dsd ...
+        </i-html>
+      </div>
+
       <h3 id="styling">Styling</h3>
 
       <p>
