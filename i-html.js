@@ -409,11 +409,11 @@ export class IHTMLElement extends HTMLElement {
   #sanitize(doc) {
     let removes = []
     const allows = this.#allow
-    if (!this.#allow.has('iframe')) removes.push('iframe')
-    if (!this.#allow.has('i-html')) removes.push('i-html')
-    if (!this.#allow.has('script')) removes.push('script')
-    if (!this.#allow.has('style')) removes.push('style', 'link[rel=stylesheet]')
-    if (!this.#allow.has('media')) removes.push('img', 'picture', 'video', 'audio', 'object')
+    if (!allows.has('iframe')) removes.push('iframe')
+    if (!allows.has('i-html')) removes.push('i-html')
+    if (!allows.has('script')) removes.push('script')
+    if (!allows.has('style')) removes.push('style', 'link[rel=stylesheet]')
+    if (!allows.has('media')) removes.push('img', 'picture', 'video', 'audio', 'object')
     if (removes.length) {
       for(const el of doc.querySelectorAll(removes.join(', '))) el.remove()
     }
