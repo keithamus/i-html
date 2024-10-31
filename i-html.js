@@ -382,7 +382,12 @@ export class IHTMLElement extends HTMLElement {
       doc.body.append(span)
       children = doc.querySelectorAll('span')
     } else {
-      const doc = new DOMParser().parseFromString(responseText, mime)
+      let doc
+      if (mime == 'text/html' && 'parseHTMLUnsafe' in Document) {
+        doc = Document.parseHTMLUnsafe(responseText)
+      } else {
+        doc = new DOMParser().parseFromString(responseText, mime)
+      }
       this.#setupRefresh(doc.querySelector('meta[http-equiv="refresh"]')?.content || '')
       children = this.#sanitize(doc).querySelectorAll(this.target)
     }

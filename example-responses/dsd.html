@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+	<body>
+    <div>
+      <template shadowrootmode="open">
+        <p><slot></slot></p>
+
+        <style>
+          :host {
+            font-family: Georgia, Times, 'Times New Roman', serif;
+            font-style: italic;
+            border-block-end: 2px dashed currentColor;
+          }
+        </style>
+      </template>
+      This will be formatted according to the stylesheet in shadow DOM.
+    </div>
+  </body>
+</html>
