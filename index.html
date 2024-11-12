@@ -285,8 +285,8 @@
 
       <p>
         By default <code>&lt;i-html></code> will parse the response as HTML,
-        and inject the <code>&lt;body></code> element's contents into itself.
-        This can be changed by altering the <code>target=</code> attribute on
+        and inject the <code>&lt;body></code> element's contents into itself, ignoring any unwrapped test nodes.
+	      The selection of content to be injected can be customized by setting the <code>target=</code> attribute on
         <code>&lt;i-html></code> itself (which defaults to <code>'body>*'</code>
         (or <code>'svg'</code> if <code>accept=</code> is an SVG mime)). If you
         find you want to take a different element from the response body, set
