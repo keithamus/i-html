@@ -1,11 +1,10 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <title>i-html, an inline-html import element</title>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <script type="module" src="./i-html.js"></script>
     <script type="module" src="https://unpkg.com/invokers-polyfill@0.4.2/invoker.js"></script>
-  </head>
   <style>
     :root {
       --background: #f1f3f5;
@@ -53,6 +52,7 @@
       }
     }
   </style>
+  </head>
   <body>
     <main>
       <h1>i-html</h1>
@@ -604,7 +604,7 @@
         under-the-hood and so must adhere to CORS policies. By default the
         <code>credentials</code> option is set to <code>'same-origin'</code>
         meaning it will send cookies (and respect the <code>Set-Cookie</code>
-        response header) for same-orign requests. To lock this down down further
+        response header) for same-orign requests. To lock this down further
         setting <code>credentials="omit"</code> will never send/recieve cookies,
         and setting <code>credentials="include"</code> will open it up to
         sending/receiving cookies in cross-origin requests.
@@ -681,8 +681,8 @@
         <dt><code>allow="media"</code></dt>
         <dd>
           This allows the rendering of <code>&lt;img></code>,
-          <code>&lt;picture></code>, <code>&lt;video></code> 
-          <code>&lt;audio></code>, and <code>&lt;object></code> elements in the
+          <code>&lt;picture></code>, <code>&lt;video></code>,
+          <code>&lt;audio></code> and <code>&lt;object></code> elements in the
           response body.
         </dd>
       </dl>
@@ -850,7 +850,7 @@
 
       <p>
         There are a wealth of events that are fired for each stage of the
-        elements lifecycle. Just like <code>&lt;img></code> and
+        element's lifecycle. Just like <code>&lt;img></code> and
         <code>&lt;iframe></code> elements, <code>&lt;i-html></code> elements
         dispatch <code>loadstart</code>, <code>load</code>,
         <code>loadend</code>, and <code>error</code> events to announce which
@@ -910,7 +910,7 @@
             <code>Node</code>s about to be inserted into the element. If you
             re-assign or otherwise mutate this array, then that is what will be
             inserted. This is useful for doing extra sanitization or simply
-            removing elements with additional scripting. If you wan't to do
+            removing elements with additional scripting. If you want to do
             something even more radical, you can call
             <code>.preventDefault()</code> and it will <em>not</em>
             insert the contents, leaving it up to you what to do next. Other
@@ -942,7 +942,7 @@
         elements.
       </p>
 
-      <h3 id="alternatives">What about using htmx / htmz?</h3>
+      <h3 id="more-alternatives">What about using htmx / htmz?</h3>
 
       <p>
         <a href="https://htmx.org/">htmx</a> and
