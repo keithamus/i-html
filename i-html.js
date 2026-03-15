@@ -64,17 +64,12 @@ export class InsertEvent extends Event {
 }
 
 function handleLinkTargets(event) {
-  const el = event.type === 'click' ? event.target.closest('a[target]') : event.target
+  const el = event.target.closest('a[target]')
   const base = event.target.ownerDocument.head.querySelector('base[target]')
   const target = el && el.target ? document.getElementById(el.target) : base && base.target ? document.getElementById(base.target) : null
   if (!target || !(target instanceof IHTMLElement)) return
-  if (event.type === 'submit' && el.tagName === 'FORM') {
-    target.src = event.submitter.getAttribute('formaction') || el.action
-    event.preventDefault()
-  } else if (event.type === 'click' && el.tagName === 'A') {
-    target.src = el.href
-    event.preventDefault()
-  }
+  target.src = el.href
+  event.preventDefault()
 }
 
 const textMime = /^text\/([^+]+\+)?plain\s*(?:;.*)?$/
@@ -235,7 +230,7 @@ export class IHTMLElement extends HTMLElement {
     this.#observe()
     this.addEventListener('command', this)
     this.ownerDocument.addEventListener('click', handleLinkTargets, true)
-    this.ownerDocument.addEventListener('submit', handleLinkTargets, true)
+    this.ownerDocument.addEventListener('submit', this, true)
   }
 
   handleEvent(event) {
@@ -246,6 +241,23 @@ export class IHTMLElement extends HTMLElement {
         clearTimeout(this.#refreshTimer)
         this.#fetchController?.abort('stop')
       }
+    } else if (event.type === 'submit') {
+      const form = event.target
+      if (form.tagName !== 'FORM') return
+      const base = form.ownerDocument.head.querySelector('base[target]')
+      const targetId = form.target || base?.target
+      if (document.getElementById(targetId) !== this) return
+      const action = event.submitter.getAttribute('formaction') || form.action
+      const method = (event.submitter.getAttribute('formmethod') || form.method || 'GET').toUpperCase()
+      const formData = new FormData(form)
+      if (method === 'GET') {
+        const url = new URL(action, window.location.href)
+        url.search = new URLSearchParams(formData).toString()
+        this.src = url.toString()
+      } else {
+        this.#load(action, {method, body: new URLSearchParams(formData)})
+      }
+      event.preventDefault()
     }
   }
 
@@ -268,14 +280,14 @@ export class IHTMLElement extends HTMLElement {
     }
   }
 
-  async #load(src) {
+  async #load(src, options) {
     if (!src && !this.hasAttribute('src')) return
     src = new URL(src || this.src, this.src || window.location.href)
     if (!this.#allow.has('cross-origin') && src.origin !== window.location.origin) {
       console.log(src, window.location.origin);
       throw new Error(`i-html failed to load cross origin resource ${src} without allow=cross-origin`)
     }
-    if (!this.#fetchController?.signal.aborted && this.#fetchController?.src == src.toString()) return
+    if (!options && !this.#fetchController?.signal.aborted && this.#fetchController?.src == src.toString()) return
     clearTimeout(this.#refreshTimer)
     this.#fetchController.abort()
     this.#fetchController = new AbortController()
@@ -289,13 +301,19 @@ export class IHTMLElement extends HTMLElement {
     await queueATask()
     let error = false
     try {
-      const request = new RequestEvent(new Request(src, {
-        method: 'GET',
+      const method = options?.method || 'GET'
+      const fetchOptions = {
+        method,
         credentials: this.credentials,
         headers: {
           Accept: this.accept,
         },
-      }))
+      }
+      if (options?.body) {
+        fetchOptions.body = options.body
+        fetchOptions.headers['Content-Type'] = 'application/x-www-form-urlencoded'
+      }
+      const request = new RequestEvent(new Request(src, fetchOptions))
       if (eventStreamMime.test(this.accept)) {
         await this.#stream(request.request)
       } else {
